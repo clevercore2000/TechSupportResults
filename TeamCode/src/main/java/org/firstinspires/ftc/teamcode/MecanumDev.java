@@ -191,7 +191,6 @@ public class MecanumDev// extends Thread
 
                 Status = MecanumStatus.MecanumReady;
             }
-
         }
         if (Status == MecanumStatus.MecanumMoveJog )
        {
@@ -256,27 +255,6 @@ public class MecanumDev// extends Thread
         return true;
     }
 
-    public boolean MoveXTo(double targetX, double targetSpeed)
-    {
-        if( Status != MecanumStatus.MecanumReady ) return false;
-        // Set the target position
-        targetPos[X] = targetX;
-        targetSpeedXY = targetSpeed;
-        // Initiate the move
-        Status = MecanumStatus.MecanumMoveAuto;
-        return true;
-    }
-
-    public boolean MoveYTo(double targetY, double targetSpeed)
-    {
-        if( Status != MecanumStatus.MecanumReady ) return false;
-        // Calculate deviation
-        targetPos[Y] = targetY;
-        targetSpeedXY = targetSpeed;
-        // Initiate the move
-        Status = MecanumStatus.MecanumMoveAuto;
-        return true;
-    }
 
     public boolean MoveRTo( double targetR, double targetSpeed)
     {
@@ -296,20 +274,11 @@ public class MecanumDev// extends Thread
         // direction X = { -1 / 0 / 1 }
 
         jogDir[X] = ( stickExpo(stickX) > STICK_DEAD_ZONE )? 1 : ( stickExpo(stickX) < -STICK_DEAD_ZONE )? -1 : 0;
-//TODO        jogDir[X] = ( stickX > STICK_DEAD_ZONE )? 1 : ( stickX < -STICK_DEAD_ZONE )? -1 : 0;
         // direction Y = { -1 / 0 / 1 }
         jogDir[Y] = ( stickExpo(stickY) > STICK_DEAD_ZONE )? 1 : ( stickExpo(stickY) < -STICK_DEAD_ZONE )? -1 : 0;
-//TODO        jogDir[Y] = ( stickY > STICK_DEAD_ZONE )? 1 : ( stickY < -STICK_DEAD_ZONE )? -1 : 0;
         // direction R = { -1 / 0 / 1 }
         jogDir[R] = ( stickExpo(stickR) > STICK_DEAD_ZONE )? 1 : ( stickExpo(stickR) < -STICK_DEAD_ZONE )? -1 : 0;
-//TODO        jogDir[R] = ( stickR > STICK_DEAD_ZONE )? 1 : ( stickR < -STICK_DEAD_ZONE )? -1 : 0;
-        // Speed gain R = absolute of the Joystick value
-//TODO        double jogSpeedR = Math.abs( stickExpo(stickR) );
-
-//TODO        double stickSpeed = Math.sqrt( stickExpo(stickX)*stickExpo(stickX) + stickExpo(stickY)*stickExpo(stickY) ); // Jog speed along the path {-1, .. 1}
         double stickSpeed = Math.sqrt( stickX*stickX + stickY*stickY )/2; // Jog speed along the path {-1, .. 1}
-
-        targetSpeedXY = JOG_P_SPEED * stickSpeed; // target speed is percentage of JOG_SPEED given by stick displacemets
 
         actSpeed[X] = jogDir[X] * Math.abs( stickX );
         actSpeed[Y] = jogDir[Y] * Math.abs( stickY );

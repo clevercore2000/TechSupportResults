@@ -31,11 +31,7 @@ public class Hardware
       public Hardware( HardwareMap hw ) {
 
         configVar = new ConfigVar();
-        Axon = hw.get(Servo.class, "Axon");
-        GrTrn = hw.get(Servo.class, "GripperTurn");
-        pickS= hw.get(Servo.class, "PickUp");
-        elbow = hw.get(Servo.class, "elbow");
-        incheietura = hw.get(Servo.class, "incheietura");
+
 
         rightFront = hw.get(DcMotor.class, "rightFront");
         leftFront = hw.get(DcMotor.class, "leftFront");

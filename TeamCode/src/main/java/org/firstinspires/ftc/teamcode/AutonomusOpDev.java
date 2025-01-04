@@ -4,10 +4,6 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.Old.Arm;
-
-import java.util.Timer;
-
 public class AutonomusOpDev extends LinearOpMode
 {
     /*

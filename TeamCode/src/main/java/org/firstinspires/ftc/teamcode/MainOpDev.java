@@ -1,19 +1,15 @@
 package org.firstinspires.ftc.teamcode;
 
-//TODO import com.acmerobotics.dashboard.FtcDashboard;
-//TODO import com.acmerobotics.dashboard.config.Config;
-import com.arcrobotics.ftclib.controller.PIDController;
+ import com.acmerobotics.dashboard.FtcDashboard;
+ import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.teamcode.Old.Arm;
-//TOdo @Config
+ import org.firstinspires.ftc.robotcore.external.Telemetry;
+
 @TeleOp
+@Config
 public class MainOpDev extends LinearOpMode {
     Hardware hardware;
 
@@ -21,6 +17,9 @@ public class MainOpDev extends LinearOpMode {
     ElapsedTime timer;
     public SliderDev sliderDev;
     public MecanumDev mecanumDev;
+    public double autoPos;
+    public double autoSpeed;
+
    // public Arm arm = new Arm(hardware);
     public double dt;
     //    MecanumDev mecanumDrive;
@@ -40,32 +39,49 @@ public class MainOpDev extends LinearOpMode {
         //sliderDev.start();
         mecanumDev.Initialize();
         sliderDev.Initialize();
+        sliderDev.Status = SliderDev.SliderStatus.SilderMoveJog;
+        //sliderDev.Status = SliderDev.SliderStatus.SliderMoveAuto;
 
         while (opModeIsActive())
         {
             // mecanumDev moves manual according to joystick inputs
             mecanumDev.jogMoveXYR(-gamepad1.left_stick_x, gamepad1.left_stick_y,-gamepad1.right_stick_x);
             mecanumDev.execute();
+
+            // Test code for slider in JOG
+            sliderDev.jogMove( -gamepad2.left_stick_y );
+            // Test code for slider in AUTO
+            //autoPos = ConfigVar.Slider.autoPosition;
+            //autoSpeed = ConfigVar.Slider.autoSpeed;
+            //sliderDev.MoveTo( autoPos, autoSpeed );
+            sliderDev.execute();
+
             dt = timer.milliseconds();
             timer.reset();
-//            sliderDev.execute();
-            //if( timer.milliseconds() > 2 )
-           // {
-
 
 
                 // Slider is moving according to joystick inputs
-//TODO                sliderDev.jogMove( -gamepad2.left_stick_y );
-//TODO                timer.reset();
+            //sliderDev.jogMove( -gamepad2.left_stick_y );
+
            // }
 
-
+/*
             telemetry.addData("jX:", -gamepad1.left_stick_x);
             telemetry.addData("jY:", gamepad1.left_stick_y);
             telemetry.addData("sX:", mecanumDev.actSpeed[0]);
             telemetry.addData("sY:", mecanumDev.actSpeed[1]);
             telemetry.addData("sR:", mecanumDev.actSpeed[2]);
             telemetry.addData("dT:", dt);
+
+ */
+            telemetry.addData("s_tgS:", sliderDev.getTargetSpeed());
+            telemetry.addData("s_tgP:", sliderDev.targetPos);
+            telemetry.addData("s_actP:", sliderDev.actPosition);
+            telemetry.addData("pow1:", sliderDev.slider1Power);
+
+
+            telemetry.addData("sKP:", sliderDev.SPEED_KP );
+            telemetry.addData("stGain:", sliderDev.STICK_GAIN);
             telemetry.update();
 
         }

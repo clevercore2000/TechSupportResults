@@ -1,8 +1,12 @@
 package org.firstinspires.ftc.teamcode;
 
 
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
+
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 //import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 //import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 //import com.qualcomm.robotcore.hardware.DcMotor;
@@ -43,41 +47,51 @@ public class SliderDev{
 
  */
     // Joystick EXPO factor {0,..,1}
-    public final double STICK_EXPO = ConfigVar.Slider.STICK_EXPO;
+    public double STICK_EXPO = ConfigVar.Slider.STICK_EXPO;
     // Position and Speed PI-Controller parameters
     public double POS_KP = ConfigVar.Slider.POS_KP;  // Position PID - proportional coefficient
     public double SPEED_KP = ConfigVar.Slider.SPEED_KP;    // Speed PID - proportional coefficient
     public double SPEED_KI = ConfigVar.Slider.SPEED_KI;     // Speed PID - Integrator coefficient
     public double SPEED_KD = ConfigVar.Slider.SPEED_KD;     // Speed PID - Derivative coefficient
-    public final double IN_WINDOW = ConfigVar.Slider.IN_WINDOW;
-    public final double MAX_TRAVEL = ConfigVar.Slider.MAX_TRAVEL;// old robot had slider extended to max 2100 ticks and travelled it in 1.5 sec
-    public final double MAX_SPEED = ConfigVar.Slider.MAX_SPEED;
-    public final double MAX_POWER = ConfigVar.Slider.MAX_POWER;
+    public double IN_WINDOW = ConfigVar.Slider.IN_WINDOW;
+    public double MAX_TRAVEL = ConfigVar.Slider.MAX_TRAVEL;// old robot had slider extended to max 2100 ticks and travelled it in 1.5 sec
+    public double MAX_SPEED = ConfigVar.Slider.MAX_SPEED;
+    public double MAX_POWER = ConfigVar.Slider.MAX_POWER;
+    public  double MAX_HEIGHT= ConfigVar.Slider.MAX_HEIGHT;
+    public  double MIN_HEIGHT= ConfigVar.Slider.MIN_HEIGHT;
     // Speed Ramp Generator
     //  * uses logistic function to generate a setpoint signal for the speed controller
     public double MAX_SPEED_LF = ConfigVar.Slider.MAX_SPEED_LF;  // Speed Gain coefficient in Logistic Function (LF) (?? test appropriate value ??)
     public double RATE_SPEED_LF = ConfigVar.Slider.RATE_SPEED_LF;  // Change Rate value in Logistic function f(x) = sspGainCoef/( 1+e^(-sspLogRate*speedSetPoint)
     public double DMP_LPF = ConfigVar.Slider.DMP_LPF;  // Dumping factor used in LowPassFilter ramp generator. Value range is ( 0..1 ) where 0 means no dumping
-    public final double STICK_DEAD_ZONE = ConfigVar.Slider.STICK_DEAD_ZONE;
-    public final double STICK_GAIN =  ConfigVar.Slider.STICK_GAIN;  // Joystick input value
-    public final double JOG_SPEED = ConfigVar.Slider.JOG_SPEED;
+    public double STICK_DEAD_ZONE = ConfigVar.Slider.STICK_DEAD_ZONE;
+    public double STICK_GAIN =  ConfigVar.Slider.STICK_GAIN;  // Joystick input value
+    public double JOG_SPEED = ConfigVar.Slider.JOG_SPEED;
 
     // Predefined positions ( would this even work??)
     /*
     * A strategy is to move the sliders to predefined positions then the driver would control the robot manually just for the local movements
     */
-    public final double HOME_POS = ConfigVar.Slider.HOME_POS;    // Home position ( fully retracted ?? )
-    public final double LOW_BASKET_POS = ConfigVar.Slider.LOW_BASKET_POS; // Low basket position
-    public final double TOP_BASCKET_POS = ConfigVar.Slider.TOP_BASCKET_POS;  // Top basket position
-    public final double GROUND_PICKUP_POS = ConfigVar.Slider.GROUND_PICKUP_POS;  // Ground pickup position
-    private double actPosition = 0;
-    private double actSpeed = 0;
-    private double targetPos = 0.0D;
+    public double HOME_POS = ConfigVar.Slider.HOME_POS;    // Home position ( fully retracted ?? )
+    public double LOW_BASKET_POS = ConfigVar.Slider.LOW_BASKET_POS; // Low basket position
+    public double TOP_BASCKET_POS = ConfigVar.Slider.TOP_BASCKET_POS;  // Top basket position
+    public double GROUND_PICKUP_POS = ConfigVar.Slider.GROUND_PICKUP_POS;  // Ground pickup position
+
+    public enum SliderStatus {SliderReady, SilderMoveJog, SliderMoveAuto, SliderFinished}
+    public SliderStatus Status = SliderStatus.SliderReady;
+
+    public double actPosition = 0;
+    public double actSpeed = 0;
+    public double targetPos = 0.0D;
     private double targetSpeed = 0.0D;
     private PIDController sliderSpeedController;
     private final ElapsedTime timer = new ElapsedTime();
     private double prevTrgSpeed=0;
     private double dT;
+    public double slider1Power;
+    public double slider2Power;
+    public double maxSpeed;
+
 
     /*
 *   speedRampGenerator
@@ -88,9 +102,9 @@ public class SliderDev{
 */
   private double speedRampGenLPF( double inputTargetSpeed )
   {
-      double retunTarget = DMP_LPF*prevTrgSpeed + (1-DMP_LPF)*inputTargetSpeed;
-              prevTrgSpeed = retunTarget;
-      return retunTarget;
+      double retTarget = DMP_LPF*prevTrgSpeed + (1-DMP_LPF)*inputTargetSpeed;
+              prevTrgSpeed = retTarget;
+      return retTarget;
   }
     private double speedRampGenLF(double inputTargetSpeed)
     {
@@ -137,8 +151,6 @@ public class SliderDev{
 */
 public void execute()
     {
-        double slider1Power;
-        double slider2Power;
 
         /*
         *  ** tagetPosition and target Speed are set in the MoveTo and ManualMove method
@@ -151,17 +163,28 @@ public void execute()
 
         // Calculate the actual speed of the slider v = ( X-Xo )/(T-To)
         actSpeed = ( hardware.sliderMotor1.getCurrentPosition() - actPosition/*it is actually previous position*/)/dT;
-        // Read actual position of the Slider
+            // Read actual position of the Slider
         actPosition = hardware.sliderMotor1.getCurrentPosition();   // now we update with actual position
 
-        // Calculates the position deviation as (targetPos - actPosition) and the targetSpeed output of P-Controller (posDeviation, posKp )
-        // Target speed is limitted to range of (-MAX_SPEED, +MAX_SPEED)
-        targetSpeed = Limitter( ((targetPos - actPosition) * POS_KP), MAX_SPEED);
-        // Smothen the taget speed setpoint for the PI controller
-        //targetSpeed = speedRampGenLF( targetSpeed );
-        targetSpeed = speedRampGenLPF( targetSpeed );
-                // Computes PI-Controller DCMotor Power for Slider for a control speed deviation = ( targetSpeed - actSliderSpeed )
+        if( Status == SliderStatus.SliderMoveAuto )
+        {
+            // Calculates the position deviation as (targetPos - actPosition) and the targetSpeed output of P-Controller (posDeviation, posKp )
+            // Target speed is limitted to range of (-MAX_SPEED, +MAX_SPEED)
+            targetSpeed = Limitter(((targetPos - actPosition) * POS_KP), MAX_SPEED);
+            // Smothen the taget speed setpoint for the PI controller
+            //targetSpeed = speedRampGenLF( targetSpeed );
+            targetSpeed = speedRampGenLPF(targetSpeed);
+            //targetSpeed /= MAX_SPEED;
+        }
+        if( Status == SliderStatus.SilderMoveJog )
+        {
+            targetSpeed = speedRampGenLPF(targetSpeed);
+        }
+
+        maxSpeed = Math.max(targetSpeed, maxSpeed);
+        // Computes PI-Controller DCMotor Power for Slider for a control speed deviation = ( targetSpeed - actSliderSpeed )
         // Power applied to DCMotor of the slider
+        //TODO slider1Power = Limitter(sliderSpeedController.calculate( /*actSliderSpeed*/hardware.sliderMotor1.getPower(), /*setpoinPower*/targetSpeed), MAX_POWER);
         slider1Power = Limitter(sliderSpeedController.calculate( /*actSliderSpeed*/hardware.sliderMotor1.getPower(), /*setpoinPower*/targetSpeed), MAX_POWER);
         // Apply to Slider2 the speed setpoint of the slider1 ( ... requires testing to check if stable )
         //  if not stable then it will be required to add P-controller to slider1 as well
@@ -169,9 +192,13 @@ public void execute()
         // Apply calculated control value to Slider
         hardware.sliderMotor1.setPower( slider1Power );
         hardware.sliderMotor2.setPower( slider2Power );
-        ///Telemetry
 
-    }
+      UpdateConfig();
+
+        ///Telemetry
+  }
+
+
     /*
      *   emergencyStop
      *   ** Stop all moves and puts the DCMotors in Freewheel
@@ -194,7 +221,7 @@ public void execute()
         /*
         *   Need revision of scaling of the targetPos
         */
-        targetPos = Math.min(MAX_TRAVEL, inputPosition );
+        targetPos = inputPosition;
         targetSpeed = inputSpeed;
     }
     /*
@@ -203,16 +230,53 @@ public void execute()
     *   ** Joystick in range {-1 .. 1}
     *   ** Joystick input value is proportional with the desired speed ( Ex: the speed increases/decreases proportionally with the forward/backward travel of the stick )
     */
-    public void jogMove( double stickIn )
+    public void jogMove( double stickSlider )
     {
         // targetPos is set to 0
-        targetPos = ( stickExpo(stickIn) < -STICK_DEAD_ZONE )? -MAX_TRAVEL : (stickExpo(stickIn) > STICK_DEAD_ZONE )? + MAX_TRAVEL : 0;
-        targetSpeed = stickExpo(stickIn) * JOG_SPEED;
+        //targetPos = stickExpo(stickSlider);
+        targetSpeed = stickSlider * STICK_GAIN;
+        if( stickSlider>0 && actPosition >= MAX_HEIGHT ) targetSpeed = 0;
+        if( stickSlider<0  && actPosition <= MIN_HEIGHT ) targetSpeed = 0;
     }
-    public double getActPosition(){ return actPosition;  }
-    public double getActualSpeed(){ return actSpeed; }
     private double stickExpo(double stickIn )
     {
         return ( stickIn * ( 1 - STICK_EXPO ) + STICK_EXPO * Math.pow(stickIn,3) );
     }
+
+    public void UpdateConfig() {
+        STICK_EXPO = ConfigVar.Slider.STICK_EXPO;
+        // Position and Speed PI-Controller parameters
+        POS_KP = ConfigVar.Slider.POS_KP;  // Position PID - proportional coefficient
+        SPEED_KP = ConfigVar.Slider.SPEED_KP;    // Speed PID - proportional coefficient
+        SPEED_KI = ConfigVar.Slider.SPEED_KI;     // Speed PID - Integrator coefficient
+        SPEED_KD = ConfigVar.Slider.SPEED_KD;     // Speed PID - Derivative coefficient
+        IN_WINDOW = ConfigVar.Slider.IN_WINDOW;
+        MAX_TRAVEL = ConfigVar.Slider.MAX_TRAVEL;// old robot had slider extended to max 2100 ticks and travelled it in 1.5 sec
+        MAX_SPEED = ConfigVar.Slider.MAX_SPEED;
+        MAX_POWER = ConfigVar.Slider.MAX_POWER;
+        MAX_HEIGHT = ConfigVar.Slider.MAX_HEIGHT;
+        MIN_HEIGHT = ConfigVar.Slider.MIN_HEIGHT;
+        // Speed Ramp Generator
+        //  * uses logistic function to generate a setpoint signal for the speed controller
+        MAX_SPEED_LF = ConfigVar.Slider.MAX_SPEED_LF;  // Speed Gain coefficient in Logistic Function (LF) (?? test appropriate value ??)
+        RATE_SPEED_LF = ConfigVar.Slider.RATE_SPEED_LF;  // Change Rate value in Logistic function f(x) = sspGainCoef/( 1+e^(-sspLogRate*speedSetPoint)
+        DMP_LPF = ConfigVar.Slider.DMP_LPF;  // Dumping factor used in LowPassFilter ramp generator. Value range is ( 0..1 ) where 0 means no dumping
+        STICK_DEAD_ZONE = ConfigVar.Slider.STICK_DEAD_ZONE;
+        STICK_GAIN = ConfigVar.Slider.STICK_GAIN;  // Joystick input value
+        JOG_SPEED = ConfigVar.Slider.JOG_SPEED;
+
+        // Predefined positions ( would this even work??)
+        /*
+         * A strategy is to move the sliders to predefined positions then the driver would control the robot manually just for the local movements
+         */
+        HOME_POS = ConfigVar.Slider.HOME_POS;    // Home position ( fully retracted ?? )
+        LOW_BASKET_POS = ConfigVar.Slider.LOW_BASKET_POS; // Low basket position
+        TOP_BASCKET_POS = ConfigVar.Slider.TOP_BASCKET_POS;  // Top basket position
+        GROUND_PICKUP_POS = ConfigVar.Slider.GROUND_PICKUP_POS;  // Ground pickup position}
+    }
+    public double getActPosition(){ return actPosition;  }
+    public double getActualSpeed(){ return actSpeed; }
+    public double getTargetSpeed(){ return targetSpeed; }
+
 }
+

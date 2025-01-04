@@ -28,11 +28,13 @@ public class ConfigVar {
     @Config
     public static class Slider{
 
+        public static double autoPosition = 100;
+        public static double autoSpeed = 2;
         // Joystick EXPO factor {0,..,1}
         public static double STICK_EXPO = 0.0D;
         // Position and Speed PI-Controller parameters
-        public static double POS_KP = 0.5D;  // Position PID - proportional coefficient
-        public static double SPEED_KP = 0.1D;    // Speed PID - proportional coefficient
+        public static double POS_KP = 0.1D;  // Position PID - proportional coefficient
+        public static double SPEED_KP = 0.2D;    // Speed PID - proportional coefficient
         public static double SPEED_KI = 0.0;     // Speed PID - Integrator coefficient
         public static double SPEED_KD = 0.0;     // Speed PID - Derivative coefficient
         public static double IN_WINDOW = 50;
@@ -45,8 +47,11 @@ public class ConfigVar {
         public static double RATE_SPEED_LF = 12.5D;  // Change Rate value in Logistic function f(x) = sspGainCoef/( 1+e^(-sspLogRate*speedSetPoint)
         public static double DMP_LPF = 0.0D;  // Dumping factor used in LowPassFilter ramp generator. Value range is ( 0..1 ) where 0 means no dumping
         public static double STICK_DEAD_ZONE = 0.0D;
-        public static double STICK_GAIN =  1.0D;  // Joystick input value
+        public static double STICK_GAIN =  5.0D;  // Joystick input value
         public static double JOG_SPEED = 100.0D;
+
+        public static double MAX_HEIGHT = 2700.0D;
+        public static double MIN_HEIGHT = 100.0D;
 
         // Predefined positions ( would this even work??)
         /*
@@ -63,6 +68,7 @@ public class ConfigVar {
         public static double WHEEL_RADIUS = 104;
         public static double WHEEL_SEPARATION_WIDTH = 413.7;
         public static double WHEEL_SEPARATION_LENGTH = 336;
+
         
         
         
