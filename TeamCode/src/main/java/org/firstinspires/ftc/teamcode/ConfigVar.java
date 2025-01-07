@@ -74,6 +74,25 @@ public class ConfigVar {
         
         
     }
+    @Config
+    public static class Arm{
+        public static double gripperOpenPos = 0.5;
+        public static double getGripperClosedPos= 0.5;
+
+        public static double poleUpPos = 0.5;
+        public static double poleSaPrepickPos= 0.5;
+        public static double poleSaPickPos = 0.5;
+        public static double idlePos = 0.5;
+        public static double poleSpPickPos = 0.5;
+        public static double poleSpPlacePos = 0.5;
+
+        public static double handlerOpenPos = 0.5;
+        public static double handlerClosedPos = 0.5;
+
+        public static double preScoopPos= 0.5;
+        public static double scoopPos = 0.5;
+
+    }
     
     
     

@@ -19,11 +19,12 @@ public class Hardware
 
     public IMU imu;
 
-   public Servo Axon ;
-   public Servo GrTrn ;
-   public Servo pickS;
 
-   public Servo elbow ;
+      public Servo gripper;
+      public Servo slider;
+      public Servo handler;
+      public Servo flipper;
+      public Servo transfer;
 
 
    public Servo incheietura;
@@ -32,38 +33,52 @@ public class Hardware
 
         configVar = new ConfigVar();
 
-
+          /**DcMotors**/
+          //Chassis
         rightFront = hw.get(DcMotor.class, "rightFront");
         leftFront = hw.get(DcMotor.class, "leftFront");
         rightBack = hw.get(DcMotor.class, "rightBack");
         leftBack = hw.get(DcMotor.class, "leftBack");
+        //Lift(Slider)
+        sliderMotor1 = hw.get(DcMotor.class, "sliderMotor1");
+        sliderMotor2 = hw.get(DcMotor.class, "sliderMotor2");
 
+        //Telling motor what to do when no power (BRAKE or FLOAT)
         rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-          rightFront = hw.get(DcMotor.class, "rightFront");
-          leftFront = hw.get(DcMotor.class, "leftFront");
-          rightBack = hw.get(DcMotor.class, "rightBack");
-          leftBack = hw.get(DcMotor.class, "leftBack");
+        sliderMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        sliderMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
 
-        sliderMotor1 = hw.get(DcMotor.class, "sliderMotor1");
-        sliderMotor2 = hw.get(DcMotor.class, "sliderMotor2");
-
+        /**Setting up the encoders **/
+        //Reseting to 0
         sliderMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         sliderMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
+        //Kinda counter-intuitive, makes the motor run at whatever velocity is achieved by apply a particular power level to the motor
         sliderMotor1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         sliderMotor2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
+        //Reversing the motors that are head to head
         rightFront.setDirection(DcMotorSimple.Direction.REVERSE);
         rightBack.setDirection(DcMotorSimple.Direction.REVERSE);
         sliderMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        sliderMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        sliderMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+
+
+        //**********************************************************************************//
+         /**Servos**/
+            gripper = hw.get(Servo.class, "Gripper");
+            slider = hw.get(Servo.class, "Slider");
+            handler = hw.get(Servo.class, "Handler");
+            flipper = hw.get(Servo.class, "Flipper");
+            transfer = hw.get(Servo.class, "Transfer");
+
+
+
 
     }
 
