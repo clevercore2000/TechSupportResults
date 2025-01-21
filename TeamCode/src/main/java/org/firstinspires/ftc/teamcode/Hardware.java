@@ -10,9 +10,9 @@ import com.qualcomm.robotcore.hardware.Servo;
 public class Hardware
 {
     public ConfigVar configVar;
-   public  DcMotor rightFront;
+    public  DcMotor rightFront;
     public   DcMotor leftFront ;
-     public DcMotor rightBack;
+    public DcMotor rightBack;
     public DcMotor leftBack ;
     public  DcMotor sliderMotor1 ;
     public  DcMotor sliderMotor2;
@@ -20,21 +20,21 @@ public class Hardware
     public IMU imu;
 
 
-      public Servo gripper;
-      public Servo slider;
-      public Servo handler;
-      public Servo flipper;
-      public Servo transfer;
+    public Servo gripperServo;
+    public Servo sliderServo;
+    public Servo handlerServo;
+    public Servo flipperServo;
+    public Servo transferServo;
+    public Servo poleServo;
+    public Servo turnerServo;
 
 
-   public Servo incheietura;
-
-      public Hardware( HardwareMap hw ) {
+    public Hardware( HardwareMap hw ) {
 
         configVar = new ConfigVar();
 
-          /**DcMotors**/
-          //Chassis
+        /**DcMotors**/
+        //Chassis
         rightFront = hw.get(DcMotor.class, "rightFront");
         leftFront = hw.get(DcMotor.class, "leftFront");
         rightBack = hw.get(DcMotor.class, "rightBack");
@@ -52,7 +52,6 @@ public class Hardware
         sliderMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         sliderMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-
         /**Setting up the encoders **/
         //Reseting to 0
         sliderMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -66,47 +65,12 @@ public class Hardware
         rightBack.setDirection(DcMotorSimple.Direction.REVERSE);
         sliderMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
 
-
-
-
         //**********************************************************************************//
-         /**Servos**/
-            gripper = hw.get(Servo.class, "Gripper");
-            slider = hw.get(Servo.class, "Slider");
-            handler = hw.get(Servo.class, "Handler");
-            flipper = hw.get(Servo.class, "Flipper");
-            transfer = hw.get(Servo.class, "Transfer");
-
-
-
-
+        /**Servos**/
+        gripperServo = hw.get(Servo.class, "Gripper");
+        poleServo = hw.get(Servo.class, "Slider");
+        handlerServo = hw.get(Servo.class, "Handler");
+        transferServo = hw.get(Servo.class, "Transfer");
+        turnerServo = hw.get(Servo.class, "Turner");
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }

@@ -3,14 +3,18 @@ package org.firstinspires.ftc.teamcode;
 import static java.lang.Math.cos;
 import static java.lang.Math.sin;
 
-import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
+
+//package org.firstinspires.ftc.teamcode;
+
+import static java.lang.Math.cos;
+import static java.lang.Math.sin;
 
 public class EncOdoDev
 {
 
 
-  //TODO  private IMU imu;
+    //TODO  private IMU imu;
     public  final double ENCODER_TICKS_PER_REV = ConfigVar.Odometry.ENCODER_TICKS_PER_REV;
     public final double WHEEL_RADIUS = ConfigVar.Odometry.WHEEL_RADIUS;
     public final double WHEEL_SEPARATION_WIDTH = ConfigVar.Odometry.WHEEL_SEPARATION_WIDTH;
@@ -38,8 +42,8 @@ public class EncOdoDev
     private double [] actSpeed  = {0, 0, 0, 0};
 
     Hardware hardware;
-     // for mecanum moves
-     private final ElapsedTime timer = new ElapsedTime();
+    // for mecanum moves
+    //    private final ElapsedTime timer = new ElapsedTime();
     private double dT = 0;
 
     EncOdoDev( Hardware hw)
@@ -50,7 +54,7 @@ public class EncOdoDev
     {
         //TODO imu.resetYaw();
         setHomePos(0, 0 , 0);
-        timer.startTime();
+        //       timer.startTime();
     }
     public void setHomePos(double homeX, double homeY, double homeR)
     {
@@ -63,10 +67,12 @@ public class EncOdoDev
     public void computeWheelsTicks()
     {
         // Actual Encoder ticks ( read from encoders )
+ /*
         actTicks[tkLFr] = hardware.leftFront.getCurrentPosition();
         actTicks[tkRFr] = hardware.rightFront.getCurrentPosition();
         actTicks[tkLBk] = hardware.leftBack.getCurrentPosition();
         actTicks[tkRBk] = hardware.rightBack.getCurrentPosition();
+*/
         // Calculate wheels speeds
         actWheelsSpeed[tkLFr] = actTicks[tkLFr] - prevTicks[tkLFr] / dT;
         actWheelsSpeed[tkRFr] = actTicks[tkRFr] - prevTicks[tkRFr] / dT;
@@ -139,8 +145,8 @@ public class EncOdoDev
 
     public void execute()
     {
-        dT = timer.milliseconds() / 1e3D;   // Get a value in seconds
-        timer.reset();
+        //       dT = timer.milliseconds() / 1e3D;   // Get a value in seconds
+        //       timer.reset();
         computeWheelsTicks();
         computeSpeeds();
         computePosition();
@@ -157,4 +163,4 @@ public class EncOdoDev
     // Actual speeds
     public double [] getSppedVector() { return actSpeed; }
     // Actual deviation
- }
+}

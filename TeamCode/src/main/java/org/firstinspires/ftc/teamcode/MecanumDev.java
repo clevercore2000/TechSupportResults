@@ -1,25 +1,16 @@
 package org.firstinspires.ftc.teamcode;
 
-import static java.lang.Math.abs;
 import static java.lang.Math.sqrt;
-import org.firstinspires.ftc.teamcode.Hardware;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.HardwareMap;
-
-import org.firstinspires.ftc.teamcode.MainOpDev;
-import com.qualcomm.robotcore.hardware.HardwareMap;
-
-
-
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 /*
-*   class MecanumControl
-*   ** Implements a mecanum drive controlled manually or autonomus
-*   ** The atributs and methods that are declared PUBLIC are the user/programmer interface
-*   ** Methods Move__To have distance (in encoder_ticks ) and speed as encoder_ticks/sec
-*   ** Moves using joystickare not implemented yet - we just need to decide how joystick inputs are used ( not a difficult job anyway :) )
-*/
-
+ *   class MecanumControl
+ *   ** Implements a mecanum drive controlled manually or autonomus
+ *   ** The atributs and methods that are declared PUBLIC are the user/programmer interface
+ *   ** Methods Move__To have distance (in encoder_ticks ) and speed as encoder_ticks/sec
+ *   ** Moves using joystickare not implemented yet - we just need to decide how joystick inputs are used ( not a difficult job anyway :) )
+ */
 
 public class MecanumDev// extends Thread
 {
@@ -34,24 +25,24 @@ public class MecanumDev// extends Thread
      */
 
     /*
-    *   run
-    *   ** This is the "main" method of the thread
-    *   ** The thread needs to be started from outside the class ( from an opMode may be??? )
-    *
-    */
+     *   run
+     *   ** This is the "main" method of the thread
+     *   ** The thread needs to be started from outside the class ( from an opMode may be??? )
+     *
+     */
     public Hardware hardware;
-/*    MecanumDev thread = new MecanumDev(hardware);
-    public void run()
-    {
-        Initialize();
-        while( true)
+    /*    MecanumDev thread = new MecanumDev(hardware);
+        public void run()
         {
-            odo.execute();
-            execute();
+            Initialize();
+            while( true)
+            {
+                odo.execute();
+                execute();
 
+            }
         }
-    }
-*/
+    */
     public enum MecanumStatus {MecanumReady, MecanumMoveJog, MecanumMoveAuto, MecanumFinished}
     private MecanumStatus Status = MecanumStatus.MecanumReady;
     public MecanumStatus getStatus() { return Status; }
@@ -82,23 +73,22 @@ public class MecanumDev// extends Thread
     private final double JOG_R_SPEED = ConfigVar.Mecanum.JOG_R_SPEED;       // Rotation speed in JOG
     private final double SPEED_GAIN = ConfigVar.Mecanum.SPEED_GAIN;       // Positioning speed gain factor in the PID controller
     public double MOTOR_POWER_GAIN = ConfigVar.Mecanum.MOTOR_POWER_GAIN; // Given by gain factor between robot speed [m/s] and corresponding wheels speed [ticks/sec]
-     // Robot position/speed
+    // Robot position/speed
     private double [] actPos = {0, 0, 0};
     private double [] errPos = {0, 0, 0};       // Position deviation X,Y,R for mecanum moves
     private double [] targetPos = {0, 0, 0};    // target position on X,Y,R
     public double [] actSpeed = {0, 0, 0};     // actual speed X,Y,R
     private double actSpeedXY = 0;    // Actual speed alond the path in XY space
-     private double targetSpeedXY = 0;    // Target speed alond the path in XY space
+    private double targetSpeedXY = 0;    // Target speed alond the path in XY space
     private double targetSpeedR = 0;    // Target speed alond the path in XY space
-//    private final ElapsedTime timer = new ElapsedTime();
-//    private double dT;
-
-
+    private final ElapsedTime tm = new ElapsedTime();
+    private double dT;
 
     public MecanumDev(Hardware hw)
     {
         this.hardware = hw;
         odo = new EncOdoDev(hardware);
+        dT = 0;
         configVar  = new ConfigVar();
     }
     public void Initialize()
@@ -113,17 +103,18 @@ public class MecanumDev// extends Thread
         hardware.leftFront.setDirection(DcMotor.Direction.FORWARD);
         hardware.rightBack.setDirection(DcMotor.Direction.REVERSE);
         hardware.leftBack.setDirection(DcMotor.Direction.FORWARD);
+
         // *** Let us reset the IMU that is used for orientation
         // REV Hub's orientation is assumed to be logo up / USB forward
         // May be a good idea to add a dedicate button on driver's controller
         // to allow the option to reset the IMU
         odo.initialize();
-//        timer.startTime();
+        tm.startTime();
     }
     /*
-    *   inPosition
-    *   ** Returns TRUE when thedeviation of the target position is in the range [ targetPosition - IN_WINDOW/2 , ... , targetPosition + IN_WINDOW/2 ]
-    */
+     *   inPosition
+     *   ** Returns TRUE when the deviation of the target position is in the range [ targetPosition - IN_WINDOW/2 , ... , targetPosition + IN_WINDOW/2 ]
+     */
     public boolean inPosition()
     {
         return ( (Math.abs(errPos[X]) <= IN_WINDOW_X ) && (Math.abs(errPos[Y]) <= IN_WINDOW_Y) && (Math.abs(errPos[R]) <= IN_WINDOW_R ));
@@ -145,18 +136,18 @@ public class MecanumDev// extends Thread
         double powerRBk = (speedY + speedX - speedR) / maxSpeed;
 
         // Move the Mecanum motors by applying power
-        hardware.leftFront.setPower( powerLFr * MOTOR_POWER_GAIN);
-        hardware.leftBack.setPower( powerLBk * MOTOR_POWER_GAIN);
-        hardware.rightFront.setPower( powerRF  * MOTOR_POWER_GAIN);
-        hardware.rightBack.setPower( powerRBk * MOTOR_POWER_GAIN);
+            hardware.leftFront.setPower(powerLFr * MOTOR_POWER_GAIN);
+            hardware.leftBack.setPower(powerLBk * MOTOR_POWER_GAIN);
+            hardware.rightFront.setPower(powerRF * MOTOR_POWER_GAIN);
+            hardware.rightBack.setPower(powerRBk * MOTOR_POWER_GAIN);
     }
     /*
-    *   executeMoves
-    *   ** This function has to be called evry cycle
-    *   ** Executes programmed moves
-    *   ** The moves are triggered by Move___To functions
-    *
-    */
+     *   executeMoves
+     *   ** This function has to be called evry cycle
+     *   ** Executes programmed moves
+     *   ** The moves are triggered by Move___To functions
+     *
+     */
     public void execute()
     {
 //        dT = timer.milliseconds() / 1e3D;   // Get a value in seconds
@@ -182,31 +173,26 @@ public class MecanumDev// extends Thread
             MecanumDrive(actSpeed[X], actSpeed[Y], errPos[R]);
             // If all axis reached target position - stop moving
             if (inPosition()) {
-
-                //   This code can help remove unnecessary gitter or oscilation if position is acceptably close to target
-
+                //   This code can helps to remove unnecessary gitter or oscilation if position is acceptably close to target
                 targetPos[X] = actPos[X];
                 targetPos[Y] = actPos[Y];
                 targetPos[R] = actPos[R];
 
                 Status = MecanumStatus.MecanumReady;
             }
+
         }
         if (Status == MecanumStatus.MecanumMoveJog )
-       {
+        {
             MecanumDrive(actSpeed[X], actSpeed[Y], actSpeed[R]);
-       }
-
-
-
-
+        }
     }
     /*
      *   emergencyStop
      *   ** Stop all moves and puts the DCMotors in Freewheel
      *
      */
-    public void emergencyStop()
+    public void stop()
     {
         // ??? Do we need to implement safety ???
         // Until above question is answered just stop movements
@@ -216,7 +202,7 @@ public class MecanumDev// extends Thread
     }
     /*
      *  Move___To functions
-     *  MoveXYRTo
+     *  MoveTo
      *  MoveXYTo
      *  MoveXTo
      *  MoveYTo
@@ -230,7 +216,7 @@ public class MecanumDev// extends Thread
      *   ** A move can be request using this functions only if robot has completed the previous move or it is switched in manual mode
      *
      */
-    public boolean MoveXYRTo(double targetX, double targetY, double targetR, double targetSpe)
+    public boolean moveTo(double targetX, double targetY, double targetR, double targetSpe)
     {
         if( Status != MecanumStatus.MecanumReady ) return false;
         // Calculate deviation
@@ -242,20 +228,30 @@ public class MecanumDev// extends Thread
         Status = MecanumStatus.MecanumMoveAuto;
         return true;
     }
-
-    public boolean MoveXYTo(double targetX, double targetY, double targetSpeed)
+    public boolean moveTo(String targetX, String targetY, String targetR, String targetSpe)
     {
         if( Status != MecanumStatus.MecanumReady ) return false;
-        // Set the target position
-        targetPos[X] = targetX;
-        targetPos[Y] = targetY;
-        targetSpeedXY = targetSpeed;
-        // Initiate the move
+        int x =0;
+        // If input targets are not "NOP" : No Operation
+        if( targetX != "NOP" && targetX != null )
+        {
+            targetPos[X] = Double.parseDouble(targetX);
+        }
+        if( targetY != "NOP" && targetY != null ) {
+            targetPos[Y] = Double.parseDouble(targetY);
+
+        }
+        if( targetR !="NOP" && targetR != null) {
+            targetPos[R] = Double.parseDouble(targetR);
+        }
+        if( targetSpe != "NOP" && targetY != null) {
+            targetSpeedXY = Double.parseDouble(targetSpe);
+        }
+
+
         Status = MecanumStatus.MecanumMoveAuto;
         return true;
     }
-
-
     public boolean MoveRTo( double targetR, double targetSpeed)
     {
         if( Status != MecanumStatus.MecanumReady ) return false;
@@ -270,15 +266,15 @@ public class MecanumDev// extends Thread
     public boolean jogMoveXYR(double stickX, double stickY, double stickR)
     {
         double [] jogDir = {0, 0 ,0 };
-        //                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  if( Status != MecanumStatus.MecanumReady ) return false;
-        // direction X = { -1 / 0 / 1 }
-
+        //if( Status != MecanumStatus.MecanumReady ) return false;
+        // Determines direction of X,Y,R as { -1 / 0 / 1 }
         jogDir[X] = ( stickExpo(stickX) > STICK_DEAD_ZONE )? 1 : ( stickExpo(stickX) < -STICK_DEAD_ZONE )? -1 : 0;
-        // direction Y = { -1 / 0 / 1 }
         jogDir[Y] = ( stickExpo(stickY) > STICK_DEAD_ZONE )? 1 : ( stickExpo(stickY) < -STICK_DEAD_ZONE )? -1 : 0;
-        // direction R = { -1 / 0 / 1 }
         jogDir[R] = ( stickExpo(stickR) > STICK_DEAD_ZONE )? 1 : ( stickExpo(stickR) < -STICK_DEAD_ZONE )? -1 : 0;
+        // Speed gain R = absolute of the Joystick value
         double stickSpeed = Math.sqrt( stickX*stickX + stickY*stickY )/2; // Jog speed along the path {-1, .. 1}
+
+        targetSpeedXY = JOG_P_SPEED * stickSpeed; // target speed is percentage of JOG_SPEED given by stick displacemets
 
         actSpeed[X] = jogDir[X] * Math.abs( stickX );
         actSpeed[Y] = jogDir[Y] * Math.abs( stickY );
@@ -287,13 +283,13 @@ public class MecanumDev// extends Thread
         return true;
     }
     // The mothods getAct___() returns a vector with actual values requested
-    public double [] getPosVector()   { return actPos;    }
+    public double [] getPosVector()   { return actPos;    } // Returns {actPos[X], actPos[Y], actPos[R]}
     // Actual speeds
-    public double [] getSppedVector() { return actSpeed; }
+    public double [] getSppedVector() { return actSpeed; }  // Returns {actSpeed[X], actSpeed[Y], actSpeed[R]}
     // Actual deviation
-    public double [] getDeviationVector()   { return errPos; }
+    public double [] getDeviationVector()   { return errPos; }  // Returns {errPos[X], errPos[Y], errPos[R]}
     // Moves completed
-    public boolean readyToMove()
+    public boolean isReady()
     {
         return ( Status == MecanumStatus.MecanumReady );
     }
@@ -301,6 +297,10 @@ public class MecanumDev// extends Thread
     {
         return ( stickIn * ( 1 - STICK_EXPO ) + STICK_EXPO * Math.pow(stickIn,3) );
     }
+
+
 }
+
+
 
 
